@@ -1,0 +1,27 @@
+﻿
+-= dsr - Digitale Satelliten Radio (DSR) encoder =-
+
+This is a highly experimental DSR encoder. It likely does not work,
+or if it does it will not sound very good.
+
+DSR (Digital Satellite Radio / Digitale Satelliten Radio) was a digital
+radio standard first demonstrated in Germany in 1989, and eventually
+discontinued in 1999. It is a wide bandwidth digital radio signal that
+can carry 32 high quality mono channels, or 16 stereo channels.
+
+This encoder is based on the specifications in ITU-R BO.712-1. It is
+an incomplete implementation that does not work on the one receiver I own.
+I'm unsure if this is the fault of my encoder or the receiver.
+
+Usage is currently basic. Running the code will produce a large file
+called "frame.bin" in the current directory, this contains 60 seconds
+worth of QPSK symbols. The DSR signal contains 32 mono channels which
+by default are all silent. Audio can be read by placing a RAW 16-bit
+mono 32kHz file at "audio/channel%02d.raw", where %02d represents the
+channel number (01-32).
+
+A GNU Radio flow graph is provided to transmit this over a hackrf or
+other compatible SDRs.
+
+-Philip Heron <phil@sanslogic.co.uk>
+

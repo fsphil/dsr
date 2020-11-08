@@ -1,0 +1,6 @@
+*.o
+*.d
+*.bin
+top_block.py
+dsrtest
+audio
