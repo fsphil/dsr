@@ -13,7 +13,7 @@ This encoder is based on the specifications in ITU-R BO.712-1. It is
 an incomplete implementation, limited to a single scale factor, but
 produces good audio quality.
 
-Tested and working on a Grundig ST-2000. It does not work with my
+Tested and working on a Grundig ST-9000. It does not work with my
 Sony DAR-1000ES, which may be faulty.
 
 Usage is currently basic. Running the code will produce a large file
