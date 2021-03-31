@@ -31,7 +31,7 @@ TODO
 * Implement scale factor support. This will help mask bit errors and
 generally improve audio quality.
 
-* Read time transmission directly from the main program.
+* Real time transmission directly from the main program.
 
 * Provide an interface to configure the channels.
 
