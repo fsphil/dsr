@@ -1,17 +1,20 @@
 ﻿
 -= dsr - Digitale Satelliten Radio (DSR) encoder =-
 
-This is a highly experimental DSR encoder. It likely does not work,
-or if it does it will not sound very good.
+This is a highly experimental DSR encoder.
 
 DSR (Digital Satellite Radio / Digitale Satelliten Radio) was a digital
 radio standard first demonstrated in Germany in 1989, and eventually
 discontinued in 1999. It is a wide bandwidth digital radio signal that
-can carry 32 high quality mono channels, or 16 stereo channels.
+can carry 32 high quality mono channels, 16 stereo channels or some
+combination of the two.
 
 This encoder is based on the specifications in ITU-R BO.712-1. It is
-an incomplete implementation that does not work on the one receiver I own.
-I'm unsure if this is the fault of my encoder or the receiver.
+an incomplete implementation, limited to a single scale factor, but
+produces good audio quality.
+
+Tested and working on a Grundig ST-2000. It does not work with my
+Sony DAR-1000ES, which may be faulty.
 
 Usage is currently basic. Running the code will produce a large file
 called "frame.bin" in the current directory, this contains 60 seconds
@@ -22,6 +25,15 @@ channel number (01-32).
 
 A GNU Radio flow graph is provided to transmit this over a hackrf or
 other compatible SDRs.
+
+TODO
+
+* Implement scale factor support. This will help mask bit errors and
+generally improve audio quality.
+
+* Read time transmission directly from the main program.
+
+* Provide an interface to configure the channels.
 
 -Philip Heron <phil@sanslogic.co.uk>
 
