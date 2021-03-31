@@ -111,16 +111,14 @@ static void _bch_encode_63_44(uint8_t *b)
 	uint32_t code = 0;
 	int i, bit;
 	
-	/* Untested! */
-	
 	for(i = 0; i < 44; i++)
 	{
-		bit = (b[i >> 3] >> (i & 7)) & 1;
-		bit = (bit ^ code) & 1;
+		bit = (b[i >> 3] >> (7 - (i & 7))) & 1;
+		bit = (bit ^ (code >> 18)) & 1;
 		
-		code >>= 1;
+		code <<= 1;
 		
-		if(bit) code ^= 0x45708;
+		if(bit) code ^= 0x8751;
 	}
 	
 	bits_write_uint(b, 44, code, 19);
