@@ -169,7 +169,6 @@ static void _ziframe(uint8_t *b, uint8_t sc_l, uint8_t sc_r, uint32_t pi)
 extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 {
 	int i, j, x;
-	const uint8_t *sa;
 	uint8_t a[40], b[40];
 	uint8_t c[8][10];
 	uint8_t zi[16][8];
@@ -177,9 +176,8 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 	const _comp_range_t *scale[32];
 	int blockno;
 	
-	/* Get a pointer to the SA frame being sent in this block */
+	/* Calculate the audio block number */
 	blockno = s->frame >> 6;
-	sa = s->sa[blockno & 127];
 	
 	/* Calculate the scale for each channel */
 	for(i = 0; i < 32; i++)
@@ -234,8 +232,8 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 		bits_write_uint(b, 0, ~0x712, 11);
 		
 		/* Special service bit */
-		j = (i + 16) & 63; /* SA bits are offset by 16 bits from the audio blocks */
-		bits_write_uint(a, 11, sa[j >> 3] >> (7 - (j & 7)), 1);
+		j = s->frame + 16; /* SA bits are offset by 16 bits from the audio blocks */
+		bits_write_uint(a, 11, s->sa[(j >> 6) & 127][(j >> 3) & 7] >> (7 - (j & 7)), 1);
 		bits_write_uint(b, 11, 0, 1);
 		
 		/* Generate the 77-bit blocks */
