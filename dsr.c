@@ -91,6 +91,18 @@ static const _comp_range_t _ranges[8] = {
 	{ 0, 0x0000 },
 };
 
+/* Abbreviated BCH(14,6) checkbits for ZI frame scale factors */
+static const uint8_t _zi_bch[64] = {
+	0x00,0xD1,0x73,0xA2,0xE6,0x37,0x95,0x44,
+	0x1D,0xCC,0x6E,0xBF,0xFB,0x2A,0x88,0x59,
+	0x3A,0xEB,0x49,0x98,0xDC,0x0D,0xAF,0x7E,
+	0x27,0xF6,0x54,0x85,0xC1,0x10,0xB2,0x63,
+	0x74,0xA5,0x07,0xD6,0x92,0x43,0xE1,0x30,
+	0x69,0xB8,0x1A,0xCB,0x8F,0x5E,0xFC,0x2D,
+	0x4E,0x9F,0x3D,0xEC,0xA8,0x79,0xDB,0x0A,
+	0x53,0x82,0x20,0xF1,0xB5,0x64,0xC6,0x17,
+};
+
 static void _mkprbs(uint8_t *b, int type)
 {
 	uint16_t r = 0xBD;
@@ -141,18 +153,33 @@ static void _77block(uint8_t *b, int16_t l1, int16_t r1, int16_t l2, int16_t r2,
 	bits_write_int(b, 74, r2, 3);
 }
 
+static void _ziframe(uint8_t *b, uint8_t sc_l, uint8_t sc_r, uint32_t pi)
+{
+	uint16_t c;
+	
+	c = ((sc_l & 7) << 3) | (sc_r & 7);
+	c = (c << 8) | _zi_bch[c];
+	
+	bits_write_int(b,  0,  c, 14);
+	bits_write_int(b, 14,  c, 14);
+	bits_write_int(b, 28,  c, 14);
+	bits_write_int(b, 42, pi, 22);
+}
+
 extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 {
 	int i, j, x;
 	const uint8_t *sa;
 	uint8_t a[40], b[40];
 	uint8_t c[8][10];
-	//uint8_t zi[16][8];
+	uint8_t zi[16][8];
 	int16_t as, *ac;
 	const _comp_range_t *scale[32];
+	int blockno;
 	
 	/* Get a pointer to the SA frame being sent in this block */
-	sa = s->sa[(s->frame >> 6) & 127];
+	blockno = s->frame >> 6;
+	sa = s->sa[blockno & 127];
 	
 	/* Calculate the scale for each channel */
 	for(i = 0; i < 32; i++)
@@ -172,13 +199,16 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 				}
 			}
 		}
-		
-		/* TODO: Remove this. Force the scale TO THE MAX */
-		scale[i] = &_ranges[7];
+	}
+	
+	/* Encode the ZI frames */
+	for(i = 0; i < 16; i++)
+	{
+		_ziframe(zi[i], scale[i * 2 + 0]->shift, scale[i * 2 + 1]->shift, 0);
 	}
 	
 	/* Load the new audio data into the delay buffer (+4ms) */
-	ac = &s->delay[(((s->frame >> 6) + 2) * 0x800) & 0x1FFF];
+	ac = &s->delay[(((blockno + 2) & 3) * 0x800) & 0x1FFF];
 	for(x = 0; x < 64; x++)
 	{
 		for(i = 0; i < 32; i++, ac++)
@@ -190,7 +220,7 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 	}
 	
 	/* Move the audio pointer back to previously written samples (-4ms) */
-	ac = &s->delay[((s->frame >> 6) * 0x800) & 0x1FFF];
+	ac = &s->delay[((blockno & 3) * 0x800) & 0x1FFF];
 	
 	/* Generate the 64 main frame pairs for this audio block */
 	for(i = 0; i < 64; i++)
@@ -204,13 +234,18 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 		bits_write_uint(b, 0, ~0x712, 11);
 		
 		/* Special service bit */
-		bits_write_uint(a, 11, sa[i >> 3] >> (7 - (i & 7)), 1);
+		j = (i + 16) & 63; /* SA bits are offset by 16 bits from the audio blocks */
+		bits_write_uint(a, 11, sa[j >> 3] >> (7 - (j & 7)), 1);
 		bits_write_uint(b, 11, 0, 1);
 		
-		/* Generate the 77-bit blocks -- the scale factor is fixed at 0 */
+		/* Generate the 77-bit blocks */
 		for(j = 0; j < 8; j++, ac += 4)
 		{
-			_77block(c[j], ac[0], ac[1], ac[2], ac[3], 0, 0);
+			_77block(c[j],
+				ac[0], ac[1], ac[2], ac[3],
+				zi[j * 2 + 0][i >> 3] >> (7 - (i & 7)),
+				zi[j * 2 + 1][i >> 3] >> (7 - (i & 7))
+			);
 			c[j][9] >>= 3;
 		}
 		
@@ -298,8 +333,10 @@ void dsr_init(dsr_t *s)
 	{
 		s->channels[i].type = 10; /* Pop music */
 		s->channels[i].music = 1; /* Music */
-		s->channels[i].mode = 1; /* Left (Mono) */
-		snprintf(s->channels[i].name, 9, " Ch. %02d ", i + 1);
+		//s->channels[i].mode = 1; /* Left (Mono) */
+		//snprintf(s->channels[i].name, 9, " Ch. %02d ", i + 1);
+		s->channels[i].mode = (i & 1 ? 2 : 1); /* Stereo */
+		snprintf(s->channels[i].name, 9, " Ch. %02d ", (i >> 1) + 1);
 	}
 	
 	_update_sa(s);

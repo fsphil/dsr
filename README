@@ -6,30 +6,25 @@ This is a highly experimental DSR encoder.
 DSR (Digital Satellite Radio / Digitale Satelliten Radio) was a digital
 radio standard first demonstrated in Germany in 1989, and eventually
 discontinued in 1999. It is a wide bandwidth digital radio signal that
-can carry 32 high quality mono channels, 16 stereo channels or some
+can carry 32 high quality mono channels, 16 stereo channels, or some
 combination of the two.
 
-This encoder is based on the specifications in ITU-R BO.712-1. It is
-an incomplete implementation, limited to a single scale factor, but
-produces good audio quality.
+This encoder is based on the specifications in ITU-R BO.712-1.
 
 Tested and working on a Grundig ST-9000. It does not work with my
 Sony DAR-1000ES, which may be faulty.
 
-Usage is currently basic. Running the code will produce a large file
-called "frame.bin" in the current directory, this contains 60 seconds
-worth of QPSK symbols. The DSR signal contains 32 mono channels which
-by default are all silent. Audio can be read by placing a RAW 16-bit
-mono 32kHz file at "audio/channel%02d.raw", where %02d represents the
-channel number (01-32).
+There's no configuration in this version, it's just a simple test. Running
+the code will produce a large file called "frame.bin" in the current
+directory, containing 60 seconds worth of QPSK symbols representing the DSR
+signal. This features 16 stereo channels which by default are all silent.
+Audio can be added by placing a RAW 16-bit stereo 32kHz file at
+"audio/channel%02d.raw", where %02d represents the channel number (01-16).
 
 A GNU Radio flow graph is provided to transmit this over a hackrf or
 other compatible SDRs.
 
 TODO
-
-* Implement scale factor support. This will help mask bit errors and
-generally improve audio quality.
 
 * Real time transmission directly from the main program.
 

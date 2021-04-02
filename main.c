@@ -33,21 +33,25 @@ int main(int argc, char *argv[])
 	FILE *f = fopen("frame.bin", "wb");
 	
 	/* Allocate memory for the audio channels */
-	for(i = 0; i < 32; i++)
+	for(i = 0; i < 32; i += 2)
 	{
 		char fname[256];
 		
-		snprintf(fname, 256, "audio/channel%02d.raw", i + 1);
+		snprintf(fname, 256, "audio/channel%02d.raw", (i / 2) + 1);
 		fin[i] = fopen(fname, "rb");
 		if(fin[i])
 		{
-			audio[i].samples = calloc(sizeof(int16_t), 64);
-			audio[i].step = 1;
+			audio[i + 0].samples = calloc(sizeof(int16_t), 64 * 2);
+			audio[i + 0].step = 2;
+			audio[i + 1].samples = audio[i + 0].samples + 1;
+			audio[i + 1].step = 2;
 		}
 		else
 		{
-			audio[i].samples = NULL;
-			audio[i].step = 0;
+			audio[i + 0].samples = NULL;
+			audio[i + 0].step = 0;
+			audio[i + 1].samples = NULL;
+			audio[i + 1].step = 0;
 		}
 	}
 	
@@ -57,17 +61,19 @@ int main(int argc, char *argv[])
 	
 	for(i = 0; i < 500 * 60; i++) /* 60 seconds */
 	{
-		for(l = 0; l < 32; l++)
+		for(l = 0; l < 32; l += 2)
 		{
 			if(audio[l].samples)
 			{
-				fread(audio[l].samples, sizeof(int16_t), 64, fin[l]);
+				fread(audio[l].samples, sizeof(int16_t), 64 * 2, fin[l]);
 				if(feof(fin[l]))
 				{
 					fclose(fin[l]);
 					free(audio[l].samples);
 					audio[l].samples = NULL;
 					audio[l].step = 0;
+					audio[l + 1].samples = NULL;
+					audio[l + 1].step = 0;
 				}
 			}
 		}
@@ -89,7 +95,7 @@ int main(int argc, char *argv[])
 	
 	fclose(f);
 	
-	for(i = 0; i < 32; i++)
+	for(i = 0; i < 32; i += 2)
 	{
 		if(audio[i].samples)
 		{
