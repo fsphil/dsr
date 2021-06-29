@@ -1,20 +1,25 @@
 
-CC      := $(CROSS_HOST)gcc
-CFLAGS  := -g -Wall -O3 $(EXTRA_CFLAGS)
-LDFLAGS := -g -lm $(EXTRA_LDFLAGS)
-OBJS    := main.o dsr.o bits.o
+CC      := gcc
+PKGCONF := pkg-config
+CFLAGS  := -g -Wall -O3 -pthread
+LDFLAGS := -g -lm -pthread
+OBJS    := dsrtx.o dsr.o bits.o conf.o src.o src_tone.o src_rawaudio.o rf.o rf_file.o rf_hackrf.o
+PKGS    := libhackrf
 
-all: dsrtest
+CFLAGS  += $(shell $(PKGCONF) --cflags $(PKGS))
+LDFLAGS += $(shell $(PKGCONF) --libs $(PKGS))
 
-dsrtest: $(OBJS)
-	$(CC) -o dsrtest $(OBJS) $(LDFLAGS)
+all: dsrtx
+
+dsrtx: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) -c $< -o $@
 	@$(CC) $(CFLAGS) -MM $< -o $(@:.o=.d)
 
 clean:
-	rm -f *.o *.d dsrtest
+	rm -f *.o *.d dsrtx
 
 -include $(OBJS:.o=.d)
 

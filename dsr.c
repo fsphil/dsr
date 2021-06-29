@@ -75,6 +75,51 @@ static const uint8_t _par[256] = {
 	0xF0,0xF0,0xF3,0xF3,0xF5,0xF5,0xF6,0xF6,0xF9,0xF9,0xFA,0xFA,0xFC,0xFC,0xFF,0xFF,
 };
 
+static const char *_charset[256] = {
+	"Ã","Å","Æ","Œ","ŷ","Ý","Õ","Ø","Þ","Ŋ","Ŕ","Ć","Ś","Ź","Ŧ","ð",
+	"ã","å","æ","œ","ŵ","ý","õ","ø","þ","ŋ","ŕ","ć","ś","ź","ŧ","",
+	" ","!","\"","#","¤","%","&","'","(",")","*","+",",","-",".","/",
+	"0","1","2","3","4","5","6","7","8","9",":",";","<","=",">","?",
+	"@","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O",
+	"P","Q","R","S","T","U","V","W","X","Y","Z","[","\\","]","―","_",
+	"‖","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o",
+	"p","q","r","s","t","u","v","w","x","y","z","{","|","}","¯","",
+	"á","à","é","è","í","ì","ó","ò","ú","ù","Ñ","Ç","Ş","β","¡","Ĳ",
+	"â","ä","ê","ë","î","ï","ô","ö","û","ü","ñ","ç","ş","ǧ","ı","ĳ",
+	"ª","α","©","‰","Ǧ","ě","ň","ő","π","₠","£","$","←","↑","→","↓",
+	"º","¹","²","³","±","İ","ń","ű","µ","¿","÷","°","¼","½","¾","§",
+	"Á","À","É","È","Í","Ì","Ó","Ò","Ú","Ù","Ř","Č","Š","Ž","Ð","Ŀ",
+	"Â","Ä","Ê","Ë","Î","Ï","Ô","Ö","Û","Ü","ř","č","š","ž","đ","ŀ",
+	"","","","","","","","","","","","","","","","",
+	"","","","","","","","","","","","","","","","",
+};
+
+typedef struct {
+	int number;
+	const char *programme_type;
+	const char *short_type;
+	int music;
+} _programme_type_t;
+
+/*static const _programme_type_t _programme_types[16] = {
+	{  0, "No programme type or undefined", "UNDEF",   -1 },
+	{  1, "News",                           "NEWS",     0 },
+	{  2, "Current affairs",                "AFFAIRS",  0 },
+	{  3, "Information",                    "INFO",     0 },
+	{  4, "Sport",                          "SPORT",    0 },
+	{  5, "Education",                      "EDUCATE",  0 },
+	{  6, "Drama",                          "DRAMA",    0 },
+	{  7, "Culture",                        "CULTURES", 0 },
+	{  8, "Science",                        "SCIENCE",  0 },
+	{  9, "Varied",                         "VARIED",   0 },
+	{ 10, "Pop music",                      "POP M",    1 },
+	{ 11, "Rock music",                     "ROCK M",   1 },
+	{ 12, "M.O.R. music",                   "M.O.R. M", 1 },
+	{ 13, "Light classical",                "LIGHT M",  1 },
+	{ 14, "Serious classical",              "CLASSICS", 1 },
+	{ 15, "Other music",                    "OTHER M",  1 },
+};*/
+
 typedef struct {
 	int shift;
 	uint16_t mask;
@@ -102,6 +147,50 @@ static const uint8_t _zi_bch[64] = {
 	0x4E,0x9F,0x3D,0xEC,0xA8,0x79,0xDB,0x0A,
 	0x53,0x82,0x20,0xF1,0xB5,0x64,0xC6,0x17,
 };
+
+static uint32_t _utf8next(const char *str, const char **next)
+{
+	const uint8_t *c;
+	uint32_t u, m;
+	uint8_t b;
+	
+	/* Read and return a utf-8 character from str.
+	 * If next is not NULL, it is pointed to the next
+	 * character following this.
+	 * 
+	 * If an invalid code is detected, the function
+	 * returns U+FFFD, � REPLACEMENT CHARACTER.
+	*/
+	
+	c = (const uint8_t *) str;
+	if(next) *next = str + 1;
+	
+	/* Shortcut for single byte codes */
+	if(*c < 0x80) return(*c);
+	
+	/* Find the code length, initial bits and the first valid code */
+	if((*c & 0xE0) == 0xC0) { u = *c & 0x1F; b = 1; m = 0x00080; }
+	else if((*c & 0xF0) == 0xE0) { u = *c & 0x0F; b = 2; m = 0x00800; }
+	else if((*c & 0xF8) == 0xF0) { u = *c & 0x07; b = 3; m = 0x10000; }
+	else return(0xFFFD);
+	
+	while(b--)
+	{
+		/* All bytes after the first must begin 0x10xxxxxx */
+		if((*(++c) & 0xC0) != 0x80) return(0xFFFD);
+		
+		/* Add the 6 new bits to the code */
+		u = (u << 6) | (*c & 0x3F);
+		
+		/* Advance next pointer */
+		if(next) (*next)++;
+	}
+	
+	/* Reject overlong encoded characters */
+	if(u < m) return(0xFFFD);
+	
+	return(u);
+}
 
 static void _mkprbs(uint8_t *b, int type)
 {
@@ -166,13 +255,14 @@ static void _ziframe(uint8_t *b, uint8_t sc_l, uint8_t sc_r, uint32_t pi)
 	bits_write_int(b, 42, pi, 22);
 }
 
-extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
+extern void dsr_encode(dsr_t *s, uint8_t *block, const int16_t *audio)
 {
 	int i, j, x;
 	uint8_t a[40], b[40];
 	uint8_t c[8][10];
 	uint8_t zi[16][8];
 	int16_t as, *ac;
+	const int16_t *ap;
 	const _comp_range_t *scale[32];
 	int blockno;
 	
@@ -180,21 +270,17 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 	blockno = s->frame >> 6;
 	
 	/* Calculate the scale for each channel */
-	for(i = 0; i < 32; i++)
+	for(ap = audio, i = 0; i < 32; i++)
 	{
 		/* Default to the minimum scale */
 		scale[i] = _ranges;
 		
-		ac = audio[i].samples;
-		if(ac != NULL)
+		for(x = 0; x < 64; x++, ap++)
 		{
-			for(x = 0; x < 64; x++, ac += audio[i].step)
+			as = (*ap < 0 ? ~*ap : *ap);
+			while(as & scale[i]->mask)
 			{
-				as = (*ac < 0 ? ~*ac : *ac);
-				while(as & scale[i]->mask)
-				{
-					scale[i]++;
-				}
+				scale[i]++;
 			}
 		}
 	}
@@ -211,8 +297,7 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 	{
 		for(i = 0; i < 32; i++, ac++)
 		{
-			*ac = audio[i].samples ? audio[i].samples[x * audio[i].step] : 0;
-			*ac <<= scale[i]->shift;
+			*ac = audio[i * 64 + x] << scale[i]->shift;
 			*ac >>= 2;
 		}
 	}
@@ -273,12 +358,47 @@ extern void dsr_encode(dsr_t *s, uint8_t *block, const dsr_audio_block_t *audio)
 	}
 }
 
-static void _update_sa(dsr_t *s)
+void dsr_encode_ps(uint8_t *dst, const char *src)
+{
+	uint32_t c;
+	int i, j;
+	
+	for(i = 0; i < 8 && *src; i++)
+	{
+		c = _utf8next(src, &src);
+		
+		/* Lookup DSR character set */
+		for(j = 0; j < 256; j++)
+		{
+			if(c == _utf8next(_charset[j], NULL)) break;
+		}
+		
+		/* Write character, or ' ' if not recognised */
+		dst[i] = (j == 256 ? ' ' : j);
+	}
+	
+	for(; i < 8; i++)
+	{
+		dst[i] = ' ';
+	}
+}
+
+void dsr_decode_ps(char *dst, const uint8_t *src)
+{
+	int i;
+	
+	for(*dst = '\0', i = 0; i < 8; i++, src++)
+	{
+		strcat(dst, _charset[*src][0] ? _charset[*src] : "?");
+	}
+}
+
+void dsr_update_sa(dsr_t *s)
 {
 	dsr_channel_t *c;
 	int i, b;
 	
-	/* Generate the SAÜ/PA (program information) frames (test data) */
+	/* Generate the SAÜ/PA (programme information) frames (test data) */
 	for(i = 0; i < 56; i++)
 	{
 		c = &s->channels[(i & 7) * 4];
@@ -304,7 +424,7 @@ static void _update_sa(dsr_t *s)
 		s->sa[i][7] = 0x00;
 	}
 	
-	/* Generate the SAÜ/SK (program source) frames (test data) */
+	/* Generate the SAÜ/SK (programme source) frames (test data) */
 	for(; i < 128; i++)
 	{
 		c = &s->channels[(i & 7) * 4];
@@ -326,17 +446,12 @@ void dsr_init(dsr_t *s)
 	
 	memset(s, 0, sizeof(dsr_t));
 	
-	/* Setup each channel (test data) */
+	/* Initial channel setup (all disabled) */
 	for(i = 0; i < 32; i++)
 	{
-		s->channels[i].type = 10; /* Pop music */
-		s->channels[i].music = 1; /* Music */
-		//s->channels[i].mode = 1; /* Left (Mono) */
-		//snprintf(s->channels[i].name, 9, " Ch. %02d ", i + 1);
-		s->channels[i].mode = (i & 1 ? 2 : 1); /* Stereo */
-		snprintf(s->channels[i].name, 9, " Ch. %02d ", (i >> 1) + 1);
+		s->channels[i].music = 1;
 	}
 	
-	_update_sa(s);
+	dsr_update_sa(s);
 }
 

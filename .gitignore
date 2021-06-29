@@ -1,6 +1,5 @@
 *.o
 *.d
 *.bin
-top_block.py
-dsrtest
+dsrtx
 audio

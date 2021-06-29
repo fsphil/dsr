@@ -1,6 +1,6 @@
 /* dsr - Digitale Satelliten Radio (DSR) encoder                         */
 /*=======================================================================*/
-/* Copyright 2020 Philip Heron <phil@sanslogic.co.uk>                    */
+/* Copyright 2021 Philip Heron <phil@sanslogic.co.uk>                    */
 /*                                                                       */
 /* This program is free software: you can redistribute it and/or modify  */
 /* it under the terms of the GNU General Public License as published by  */
@@ -15,38 +15,55 @@
 /* You should have received a copy of the GNU General Public License     */
 /* along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _DSR_H
-#define _DSR_H
-
 #include <stdint.h>
 
-#define DSR_SAMPLE_RATE 32000
-#define DSR_SYMBOL_RATE 10240000
+#ifndef _RF_H
+#define _RF_H
+
+/* File output types */
+#define RF_UINT8  0
+#define RF_INT8   1
+#define RF_UINT16 2
+#define RF_INT16  3
+#define RF_INT32  4
+#define RF_FLOAT  5 /* 32-bit float */
+
+/* Callback prototypes */
+typedef int (*rf_write_t)(void *private, int16_t *iq_data, int samples);
+typedef int (*rf_close_t)(void *private);
 
 typedef struct {
-	int type;
-	int music;
-	int mode;
-	uint8_t name[8];
-	void *arg;
-} dsr_channel_t;
+	
+	void *private;
+	rf_write_t write;
+	rf_close_t close;
+	
+} rf_t;
+
+extern int rf_write(rf_t *s, int16_t *iq_data, int samples);
+extern int rf_close(rf_t *s);
 
 typedef struct {
 	
-	dsr_channel_t channels[32];
+	int interpolation;
+	int ntaps;
+	int16_t *taps;
 	
-	int frame;
-	uint8_t sa[128][8];
-	int16_t delay[8192];
+	/* Output window */
+	int winx;
+	int16_t *win;
 	
-} dsr_t;
+	/* Differential state */
+	int sym;
+	
+} rf_qpsk_t;
 
-extern void dsr_frames(dsr_t *s, uint8_t *a, uint8_t *b);
-extern void dsr_encode(dsr_t *s, uint8_t *block, const int16_t *audio);
-extern void dsr_encode_ps(uint8_t *dst, const char *src);
-extern void dsr_decode_ps(char *dst, const uint8_t *src);
-extern void dsr_update_sa(dsr_t *s);
-extern void dsr_init(dsr_t *s);
+extern void rf_qpsk_free(rf_qpsk_t *s);
+extern int rf_qpsk_init(rf_qpsk_t *s, int interpolation, double level);
+extern int rf_qpsk_modulate(rf_qpsk_t *s, int16_t *dst, const uint8_t *src, int bits);
+
+#include "rf_file.h"
+#include "rf_hackrf.h"
 
 #endif
 

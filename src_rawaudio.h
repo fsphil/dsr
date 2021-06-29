@@ -1,6 +1,6 @@
 /* dsr - Digitale Satelliten Radio (DSR) encoder                         */
 /*=======================================================================*/
-/* Copyright 2020 Philip Heron <phil@sanslogic.co.uk>                    */
+/* Copyright 2021 Philip Heron <phil@sanslogic.co.uk>                    */
 /*                                                                       */
 /* This program is free software: you can redistribute it and/or modify  */
 /* it under the terms of the GNU General Public License as published by  */
@@ -15,38 +15,10 @@
 /* You should have received a copy of the GNU General Public License     */
 /* along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-#ifndef _DSR_H
-#define _DSR_H
+#ifndef _SRC_RAWAUDIO_H
+#define _SRC_RAWAUDIO_H
 
-#include <stdint.h>
-
-#define DSR_SAMPLE_RATE 32000
-#define DSR_SYMBOL_RATE 10240000
-
-typedef struct {
-	int type;
-	int music;
-	int mode;
-	uint8_t name[8];
-	void *arg;
-} dsr_channel_t;
-
-typedef struct {
-	
-	dsr_channel_t channels[32];
-	
-	int frame;
-	uint8_t sa[128][8];
-	int16_t delay[8192];
-	
-} dsr_t;
-
-extern void dsr_frames(dsr_t *s, uint8_t *a, uint8_t *b);
-extern void dsr_encode(dsr_t *s, uint8_t *block, const int16_t *audio);
-extern void dsr_encode_ps(uint8_t *dst, const char *src);
-extern void dsr_decode_ps(char *dst, const uint8_t *src);
-extern void dsr_update_sa(dsr_t *s);
-extern void dsr_init(dsr_t *s);
+extern int src_rawaudio_open(src_t *s, const char *filename, int exec, int stereo, int repeat);
 
 #endif
 
