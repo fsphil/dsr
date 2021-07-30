@@ -11,6 +11,7 @@ The output sample rate must be a multiple of DSR's symbol rate (10.24 MHz).
 * Supported audio input:
 - 32 khz 16-bit raw audio (mono or stereo)
 - Generated test tone
+- Optionally any audio source supported by ffmpeg
 
 * Supported output:
 - hackrf
