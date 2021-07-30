@@ -126,6 +126,27 @@ static void *_open_src(conf_t conf, int i)
 			return(NULL);
 		}
 	}
+#ifdef HAVE_FFMPEG
+	else if(strcasecmp(v, "ffmpeg") == 0)
+	{
+		v = conf_str(conf, "channel", i, "input", NULL);
+		if(!v)
+		{
+			fprintf(stderr, "Warning: Missing input filename/URL\n");
+			free(src);
+			return(NULL);
+		}
+		
+		r = src_ffmpeg_open(src, v);
+		if(r != 0)
+		{
+			fprintf(stderr, "Warning: Failed to open '%s'\n", v);
+			free(src);
+			return(NULL);
+		}
+
+	}
+#endif
 	else
 	{
 		fprintf(stderr, "Warning: Unrecognised input type '%s'\n", v);
@@ -293,6 +314,10 @@ int main(int argc, char *argv[])
 		{ 0, 0, 0, 0 }
 	};
 	
+#ifdef HAVE_FFMPEG
+	src_ffmpeg_init();
+#endif
+	
 	memset(&s, 0, sizeof(dsrtx_t));
 	dsr_init(&s.dsr);
 	
@@ -411,6 +436,10 @@ int main(int argc, char *argv[])
 			free(s.dsr.channels[c].arg);
 		}
 	}
+	
+#ifdef HAVE_FFMPEG
+	src_ffmpeg_deinit();
+#endif
 	
 	return(0);
 }

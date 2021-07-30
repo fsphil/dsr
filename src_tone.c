@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include "src.h"
 
 typedef struct {
@@ -58,6 +59,8 @@ static int _src_tone_close(src_tone_t *src)
 int src_tone_open(src_t *s, double frequency, double level)
 {
 	src_tone_t *src;
+	
+	memset(s, 0, sizeof(src_t));
 	
 	src = calloc(1, sizeof(src_tone_t));
 	if(!src)

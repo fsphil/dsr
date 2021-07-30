@@ -103,7 +103,6 @@ int src_read_stereo(src_t *s, int16_t *dst_l, int step_l, int16_t *dst_r, int st
 	return(i);
 }
 
-
 int src_eof(src_t *s)
 {
 	if(!s) return(-1); /* EOF */

@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "src.h"
 
 typedef struct {
@@ -74,6 +75,8 @@ static int _src_rawaudio_close(src_rawaudio_t *src)
 int src_rawaudio_open(src_t *s, const char *filename, int exec, int stereo, int repeat)
 {
 	src_rawaudio_t *src;
+	
+	memset(s, 0, sizeof(src_t));
 	
 	src = calloc(1, sizeof(src_rawaudio_t));
 	if(!src)
