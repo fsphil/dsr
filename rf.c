@@ -76,13 +76,18 @@ static double _rrc(double x, double b, double t)
 
 void rf_qpsk_free(rf_qpsk_t *s)
 {
-	free(s->taps);
+	int i;
+	for(i = 0; i < 4; i++)
+	{
+		free(s->taps[i]);
+	}
 	free(s->win);
 }
 
 int rf_qpsk_init(rf_qpsk_t *s, int interpolation, double level)
 {
-	int x, n;
+	const double sym[4][2] = { { -1, -1 }, { -1, 1 }, { 1, 1 }, { 1, -1 } };
+	int i, x, n;
 	double r, t;
 	
 	memset(s, 0, sizeof(rf_qpsk_t));
@@ -90,19 +95,24 @@ int rf_qpsk_init(rf_qpsk_t *s, int interpolation, double level)
 	/* Generate the symbol shape */
 	s->interpolation = interpolation;
 	s->ntaps = (10 * s->interpolation) | 1;
-	s->taps = malloc(sizeof(int16_t) * s->ntaps);
-	if(!s->taps)
-	{
-		rf_qpsk_free(s);
-		return(-1);
-	}
 	
-	n = s->ntaps / 2;
-	for(x = 0; x < s->ntaps; x++)
+	for(i = 0; i < 4; i++)
 	{
-		t = ((double) x - n) / s->interpolation;
-		r = _rrc(t, 0.5, 1.0) * _hamming(((double) x - n) / n);
-		s->taps[x] = lround(r * M_SQRT1_2 * INT16_MAX * level);
+		s->taps[i] = malloc(sizeof(int16_t) * 2 * s->ntaps);
+		if(!s->taps[i])
+		{
+			rf_qpsk_free(s);
+			return(-1);
+		}
+		
+		n = s->ntaps / 2;
+		for(x = 0; x < s->ntaps; x++)
+		{
+			t = ((double) x - n) / s->interpolation;
+			r = _rrc(t, 0.5, 1.0) * _hamming(((double) x - n) / n);
+			s->taps[i][x * 2 + 0] = lround(r * sym[i][0] * M_SQRT1_2 * INT16_MAX * level);
+			s->taps[i][x * 2 + 1] = lround(r * sym[i][1] * M_SQRT1_2 * INT16_MAX * level);
+		}
 	}
 	
 	/* Allocate memory for the output window */
@@ -122,23 +132,31 @@ int rf_qpsk_init(rf_qpsk_t *s, int interpolation, double level)
 
 int rf_qpsk_modulate(rf_qpsk_t *s, int16_t *dst, const uint8_t *src, int bits)
 {
-	const uint8_t sym[4] = { 0, 2, 3, 1 };
 	const uint8_t map[4] = { 0, 3, 1, 2 };
+	const int16_t *taps;
+	int16_t *win;
 	int x, i;
-	int a;
 	
 	for(x = 0; x < bits; x += 2)
 	{
 		/* Read out the next 2-bit symbol, MSB first */
 		s->sym = (s->sym + map[(src[x >> 3] >> (6 - (x & 0x07))) & 0x03]) & 3;
-		a = sym[s->sym];
 		
 		/* Update the output window with the new symbol */
-		for(i = 0; i < s->ntaps; i++)
+		taps = s->taps[s->sym];
+		
+		win = &s->win[s->winx * 2];
+		for(i = 0; i < (s->ntaps - s->winx); i++)
 		{
-			s->win[s->winx * 2 + 0] += (a & 1 ? s->taps[i] : -s->taps[i]);
-			s->win[s->winx * 2 + 1] += (a & 2 ? s->taps[i] : -s->taps[i]);
-			if(++s->winx == s->ntaps) s->winx = 0;
+			*(win++) += *(taps++);
+			*(win++) += *(taps++);
+		}
+		
+		win = &s->win[0];
+		for(; i < s->ntaps; i++)
+		{
+			*(win++) += *(taps++);
+			*(win++) += *(taps++);
 		}
 		
 		for(i = 0; i < s->interpolation; i++)

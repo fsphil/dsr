@@ -47,7 +47,7 @@ typedef struct {
 	
 	int interpolation;
 	int ntaps;
-	int16_t *taps;
+	int16_t *taps[4];
 	
 	/* Output window */
 	int winx;
