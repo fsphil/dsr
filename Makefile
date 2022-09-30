@@ -13,6 +13,13 @@ ifeq ($(FFMPEG),ffmpeg)
 	CFLAGS += -DHAVE_FFMPEG
 endif
 
+SOAPYSDR := $(shell $(PKGCONF) --exists SoapySDR && echo SoapySDR)
+ifeq ($(SOAPYSDR),SoapySDR)
+	OBJS += rf_soapysdr.o
+	PKGS += SoapySDR
+	CFLAGS += -DHAVE_SOAPYSDR
+endif
+
 CFLAGS  += $(shell $(PKGCONF) --cflags $(PKGS))
 LDFLAGS += $(shell $(PKGCONF) --libs $(PKGS))
 

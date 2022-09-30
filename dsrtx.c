@@ -41,6 +41,7 @@ typedef struct {
 	unsigned int sample_rate;
 	int gain;
 	int amp;
+	const char *antenna;
 	
 	/* Verbose flag */
 	int verbose;
@@ -192,6 +193,7 @@ const int _load_config(dsrtx_t *s, const char *filename)
 	s->frequency = conf_double(conf, "output", -1, "frequency", 0),
 	s->gain = conf_int(conf, "output", -1, "gain", 0);
 	s->amp = conf_int(conf, "output", -1, "amp", 0);
+	s->antenna = conf_str(conf, "output", -1, "antenna", NULL);
 	
 	/* Load configuration for each channel */
 	for(i = 0; conf_section_exists(conf, "channel", i); i++)
@@ -422,6 +424,15 @@ int main(int argc, char *argv[])
 			return(-1);
 		}
 	}
+#ifdef HAVE_SOAPYSDR
+	else if(strcmp(s.output_type, "soapysdr") == 0)
+	{
+		if(rf_soapysdr_open(&s.rf, s.output, s.sample_rate, s.frequency, s.gain, s.antenna) != 0)
+		{
+			return(-1);
+		}
+	}
+#endif
 	
 	testrun(&s);
 	
