@@ -38,7 +38,7 @@ static int _rf_write(void *private, int16_t *iq_data, int samples)
 	int flags = 0;
 	int r;
 	
-	while(samples >= 0)
+	while(samples > 0)
 	{
 		buffs[0] = iq_data;
 		
