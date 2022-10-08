@@ -22,6 +22,16 @@
 #include "rf.h"
 
 /* RF sink interface */
+extern double rf_scale(rf_t *s)
+{
+	if(s->scale != 0)
+	{
+		return(s->scale);
+	}
+	
+	return(1.0);
+}
+
 int rf_write(rf_t *s, int16_t *iq_data, int samples)
 {
 	if(s->write)

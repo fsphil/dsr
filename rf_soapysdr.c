@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <SoapySDR/Device.h>
 #include <SoapySDR/Formats.h>
 #include <SoapySDR/Version.h>
@@ -73,6 +74,8 @@ int rf_soapysdr_open(rf_t *s, const char *device, unsigned int sample_rate, unsi
 	soapysdr_t *rf;
 	SoapySDRKwargs *results;
 	size_t length;
+	char *sn;
+	double fullscale;
 	
 	rf = calloc(1, sizeof(soapysdr_t));
 	if(!rf)
@@ -147,6 +150,14 @@ int rf_soapysdr_open(rf_t *s, const char *device, unsigned int sample_rate, unsi
 		fprintf(stderr, "SoapySDRDevice_setAntenna() failed: %s\n", SoapySDRDevice_lastError());
 		free(rf);
 		return(-1);
+	}
+	
+	/* Query the native stream format, see if we need to scale the output */
+	sn = SoapySDRDevice_getNativeStreamFormat(rf->d, SOAPY_SDR_TX, 0, &fullscale);
+	if(sn && strcmp(sn, "CS16") == 0)
+	{
+		s->scale = fullscale / INT16_MAX;
+		if(s->scale > 1.0) s->scale = 1.0;
 	}
 	
 #if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00080000)

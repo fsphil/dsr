@@ -38,8 +38,11 @@ typedef struct {
 	rf_write_t write;
 	rf_close_t close;
 	
+	double scale;
+	
 } rf_t;
 
+extern double rf_scale(rf_t *s);
 extern int rf_write(rf_t *s, int16_t *iq_data, int samples);
 extern int rf_close(rf_t *s);
 

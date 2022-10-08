@@ -406,8 +406,6 @@ int main(int argc, char *argv[])
 	signal(SIGABRT, &_sigint_callback_handler);
 	
 	/* Start the radio */
-	rf_qpsk_init(&s.qpsk, s.sample_rate / DSR_SYMBOL_RATE, 0.8);
-	
 	if(strcmp(s.output_type, "hackrf") == 0)
 	{
 		if(rf_hackrf_open(&s.rf, s.output, s.sample_rate, s.frequency, s.gain, s.amp) != 0)
@@ -433,6 +431,9 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
+	
+	/* Initalise the modem */
+	rf_qpsk_init(&s.qpsk, s.sample_rate / DSR_SYMBOL_RATE, 0.8 * rf_scale(&s.rf));
 	
 	testrun(&s);
 	
