@@ -113,7 +113,7 @@ static int _src_ffmpeg_close(src_ffmpeg_t *src)
 int src_ffmpeg_open(src_t *s, const char *input_url)
 {
 	src_ffmpeg_t *src;
-	AVCodec *codec;
+	const AVCodec *codec;
 	int r;
 	int i;
 	
