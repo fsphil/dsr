@@ -173,7 +173,7 @@ static int _buffer_write(buffers_t *buffers, void *src, size_t length)
 	
 	memcpy(buf->data + i, src, length);
 	buf->length += length;
-
+	
 	return(length);
 }
 
