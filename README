@@ -15,6 +15,7 @@ The output sample rate must be a multiple of DSR's symbol rate (10.24 MHz).
 
 * Supported output:
 - hackrf
+- SoapySDR supported devices
 - IQ file
 
 Configuration is done by ini-style file. Please see example.conf for details.
