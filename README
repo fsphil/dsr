@@ -18,7 +18,36 @@ The output sample rate must be a multiple of DSR's symbol rate (10.24 MHz).
 - SoapySDR supported devices
 - IQ file
 
+
+REQUIREMENTS
+
+Depends on libhackrf, and optionally soapysdr and ffmpeg libraries.
+
+* For Fedora (with rpmfusion)
+yum install hackrf-devel SoapySDR-devel ffmpeg-devel
+
+
+WARNING
+
+The hackrf and other SDRs are not designed to be connected directly to AV
+equipment and could be damaged by, or cause damage to, your receiver. Please
+ensure no DC voltages or control signals are sent back into the hackrf, and
+that the RF power levels out of the hackrf are not too high for your receiver.
+
+
+INSTALL
+
+cd src
+make
+make install
+
+
+RUNNING
+
 Configuration is done by ini-style file. Please see example.conf for details.
+
+$ dsrtx -c example.conf
+
 
 -Philip Heron <phil@sanslogic.co.uk>
 
