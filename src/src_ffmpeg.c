@@ -114,6 +114,9 @@ int src_ffmpeg_open(src_t *s, const char *input_url)
 {
 	src_ffmpeg_t *src;
 	const AVCodec *codec;
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 24, 100)
+        AVChannelLayout dst_ch_layout = AV_CHANNEL_LAYOUT_STEREO;
+#endif
 	int r;
 	int i;
 	
@@ -158,7 +161,11 @@ int src_ffmpeg_open(src_t *s, const char *input_url)
 	{
 		if(src->format_ctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
 		{
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 24, 100)
+			if(src->format_ctx->streams[i]->codecpar->ch_layout.nb_channels <= 0) continue;
+#else
 			if(src->format_ctx->streams[i]->codecpar->channels <= 0) continue;
+#endif
 			src->audio_stream = src->format_ctx->streams[i];
 			break;
 		}
@@ -217,6 +224,13 @@ int src_ffmpeg_open(src_t *s, const char *input_url)
 		return(-1);
 	}
 	
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(59, 24, 100)
+	av_opt_set_chlayout(src->swr_ctx, "in_chlayout",     &src->audio_codec_ctx->ch_layout, 0);
+	av_opt_set_int(src->swr_ctx, "in_sample_rate",       src->audio_codec_ctx->sample_rate, 0);
+	av_opt_set_sample_fmt(src->swr_ctx, "in_sample_fmt", src->audio_codec_ctx->sample_fmt, 0);
+	
+	av_opt_set_chlayout(src->swr_ctx, "out_chlayout",    &dst_ch_layout, 0);
+#else
 	if(!src->audio_codec_ctx->channel_layout)
 	{
 		/* Set the default layout for codecs that don't specify any */
@@ -228,6 +242,8 @@ int src_ffmpeg_open(src_t *s, const char *input_url)
 	av_opt_set_sample_fmt(src->swr_ctx, "in_sample_fmt", src->audio_codec_ctx->sample_fmt, 0);
 	
 	av_opt_set_int(src->swr_ctx, "out_channel_layout",    AV_CH_LAYOUT_STEREO, 0);
+#endif
+	
 	av_opt_set_int(src->swr_ctx, "out_sample_rate",       SRC_SAMPLE_RATE, 0);
 	av_opt_set_sample_fmt(src->swr_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0);
 	
