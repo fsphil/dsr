@@ -1,6 +1,14 @@
 ﻿
 -= dsrtx - Digitale Satelliten Radio (DSR) transmitter =-
 
+NOTICE
+
+The GitHub repository at https://github.com/fsphil/dsr is being removed
+at the end of 2025. The new location is: https://codeberg.org/fsphil/dsr
+Both repositories will be kept in sync until then.
+
+ABOUT
+
 DSR (Digital Satellite Radio / Digitale Satelliten Radio) is a wide
 bandwidth digital radio standard that can carry 32x 32 kHz 16:14-bit audio
 channels. These may be paired for up to 16 stereo channels.
