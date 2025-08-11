@@ -406,22 +406,22 @@ int main(int argc, char *argv[])
 	signal(SIGABRT, &_sigint_callback_handler);
 	
 	/* Start the radio */
-	if(strcmp(s.output_type, "hackrf") == 0)
-	{
-		if(rf_hackrf_open(&s.rf, s.output, s.sample_rate, s.frequency, s.gain, s.amp) != 0)
-		{
-			//vid_free(&s.vid);
-			return(-1);
-		}
-	}
-	else if(strcmp(s.output_type, "file") == 0)
+	if(strcmp(s.output_type, "file") == 0)
 	{
 		if(rf_file_open(&s.rf, s.output, s.data_type) != 0)
 		{
-			//vid_free(&s.vid);
 			return(-1);
 		}
 	}
+#ifdef HAVE_HACKRF
+	else if(strcmp(s.output_type, "hackrf") == 0)
+	{
+		if(rf_hackrf_open(&s.rf, s.output, s.sample_rate, s.frequency, s.gain, s.amp) != 0)
+		{
+			return(-1);
+		}
+	}
+#endif
 #ifdef HAVE_SOAPYSDR
 	else if(strcmp(s.output_type, "soapysdr") == 0)
 	{
@@ -431,6 +431,11 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
+	else
+	{
+		fprintf(stderr, "Unrecognised output type: %s\n", s.output_type);
+		return(-1);
+	}
 	
 	/* Initalise the modem */
 	rf_qpsk_init(&s.qpsk, s.sample_rate / DSR_SYMBOL_RATE, 0.8 * rf_scale(&s.rf));
