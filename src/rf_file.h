@@ -18,7 +18,7 @@
 #ifndef _RF_FILE_H
 #define _RF_FILE_H
 
-extern int rf_file_open(rf_t *s, const char *filename, int type);
+extern int rf_file_open(rf_t *s, const char *filename, int type, int live);
 
 #endif
 

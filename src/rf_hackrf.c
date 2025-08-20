@@ -352,6 +352,9 @@ int rf_hackrf_open(rf_t *s, const char *serial, int sample_rate, uint64_t freque
 	s->write = _rf_write;
 	s->close = _rf_close;
 	
+	/* This is a live target */
+	s->live = 1;
+	
 	return(0);
 };
 

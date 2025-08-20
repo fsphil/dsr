@@ -39,6 +39,7 @@ typedef struct {
 	rf_close_t close;
 	
 	double scale;
+	int live;
 	
 } rf_t;
 

@@ -179,6 +179,9 @@ int rf_soapysdr_open(rf_t *s, const char *device, unsigned int sample_rate, unsi
 	s->write = _rf_write;
 	s->close = _rf_close;
 	
+	/* This is a live target */
+	s->live = 1;
+	
 	return(0);
 };
 

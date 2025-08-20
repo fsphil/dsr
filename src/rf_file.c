@@ -160,7 +160,7 @@ static int _rf_file_close(void *private)
 	return(0);
 }
 
-int rf_file_open(rf_t *s, const char *filename, int type)
+int rf_file_open(rf_t *s, const char *filename, int type, int live)
 {
 	rf_file_t *rf = calloc(1, sizeof(rf_file_t));
 	
@@ -239,6 +239,9 @@ int rf_file_open(rf_t *s, const char *filename, int type)
 	case RF_INT32:  s->write = _rf_file_write_int32;  break;
 	case RF_FLOAT:  s->write = _rf_file_write_float;  break;
 	}
+	
+	/* Is this a live target? */
+	s->live = live ? 1 : 0;
 	
 	return(0);
 }

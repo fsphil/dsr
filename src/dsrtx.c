@@ -42,6 +42,7 @@ typedef struct {
 	int gain;
 	int amp;
 	const char *antenna;
+	int live;
 	
 	/* Verbose flag */
 	int verbose;
@@ -194,6 +195,7 @@ const int _load_config(dsrtx_t *s, const char *filename)
 	s->gain = conf_int(conf, "output", -1, "gain", 0);
 	s->amp = conf_int(conf, "output", -1, "amp", 0);
 	s->antenna = conf_str(conf, "output", -1, "antenna", NULL);
+	s->live = conf_bool(conf, "output", -1, "live", 0);
 	
 	/* Load configuration for each channel */
 	for(i = 0; conf_section_exists(conf, "channel", i); i++)
@@ -408,7 +410,7 @@ int main(int argc, char *argv[])
 	/* Start the radio */
 	if(strcmp(s.output_type, "file") == 0)
 	{
-		if(rf_file_open(&s.rf, s.output, s.data_type) != 0)
+		if(rf_file_open(&s.rf, s.output, s.data_type, s.live) != 0)
 		{
 			return(-1);
 		}
