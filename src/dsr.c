@@ -403,7 +403,8 @@ void dsr_update_sa(dsr_t *s)
 	{
 		c = &s->channels[(i & 7) * 4];
 		
-		bits_write_uint(s->sa[i], 0, i & 7 ? 0x5FF : 0x5CF, 16);
+		s->sa[i][0] = 0x05;
+		s->sa[i][1] = i & 7 ? 0xFF : 0xCF;
 		s->sa[i][2] = _par[(c[0].type << 4) | (c[0].music << 3) | (c[0].mode << 1)];
 		s->sa[i][3] = _par[(c[1].type << 4) | (c[1].music << 3) | (c[1].mode << 1)];
 		s->sa[i][4] = _par[(c[2].type << 4) | (c[2].music << 3) | (c[2].mode << 1)];
@@ -415,7 +416,8 @@ void dsr_update_sa(dsr_t *s)
 	/* Generate the SAÜ/LB (zero byte) frames */
 	for(; i < 64; i++)
 	{
-		bits_write_uint(s->sa[i], 0, i & 7 ? 0x5FF : 0x5CF, 16);
+		s->sa[i][0] = 0x05;
+		s->sa[i][1] = i & 7 ? 0xFF : 0xCF;
 		s->sa[i][2] = 0x00;
 		s->sa[i][3] = 0x00;
 		s->sa[i][4] = 0x00;
@@ -430,7 +432,8 @@ void dsr_update_sa(dsr_t *s)
 		c = &s->channels[(i & 7) * 4];
 		b = (i - 64) >> 3;
 		
-		bits_write_uint(s->sa[i], 0, i & 7 ? 0x5FF : 0x5CF, 16);
+		s->sa[i][0] = 0x05;
+		s->sa[i][1] = i & 7 ? 0xFF : 0xCF;
 		s->sa[i][2] = c[0].name[b];
 		s->sa[i][3] = c[1].name[b];
 		s->sa[i][4] = c[2].name[b];
