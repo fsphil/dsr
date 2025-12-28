@@ -214,8 +214,8 @@ const int _load_config(dsrtx_t *s, const char *filename)
 		if(strcasecmp(v, "s") == 0)
 		{
 			/* Stereo channel. Test if both L/R channels are free */
-			if(s->dsr.channels[c + 0].mode != 0 ||
-			   s->dsr.channels[c + 1].mode != 0)
+			if(s->dsr.channels[c + 0].mode != 4 ||
+			   s->dsr.channels[c + 1].mode != 4)
 			{
 				fprintf(stderr, "Warning: Channel %02d/S is already allocated. Skipping\n", (c >> 1) + 1);
 				continue;
@@ -240,7 +240,7 @@ const int _load_config(dsrtx_t *s, const char *filename)
 			if(*v == 'b' || *v == 'B') c++;
 			
 			/* Test if this channel is free */
-			if(s->dsr.channels[c].mode != 0)
+			if(s->dsr.channels[c].mode != 4)
 			{
 				fprintf(stderr, "Warning: Channel %02d/%c is already allocated. Skipping\n", (c >> 1) + 1, c & 1 ? 'B' : 'A');
 				continue;
@@ -412,8 +412,6 @@ int main(int argc, char *argv[])
 	while(!_abort)
 	{
 		/* Update the audio block */
-		memset(audio, 0, 64 * 32 * sizeof(int16_t));
-		
 		for(l = 0; l < 32; l++)
 		{
 			if(s.dsr.channels[l & 30].mode == 1 &&
@@ -425,6 +423,10 @@ int main(int argc, char *argv[])
 			else if(s.dsr.channels[l].mode == 1)
 			{
 				src_read_mono(s.dsr.channels[l].arg, &audio[l * 64], 1, 64);
+			}
+			else
+			{
+				memset(&audio[l * 64], 0xFF, 64);
 			}
 		}
 		

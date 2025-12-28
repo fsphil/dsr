@@ -452,6 +452,7 @@ void dsr_init(dsr_t *s)
 	/* Initial channel setup (all disabled) */
 	for(i = 0; i < 32; i++)
 	{
+		s->channels[i].mode = 4;
 		s->channels[i].music = 1;
 	}
 	
