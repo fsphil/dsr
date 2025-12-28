@@ -398,7 +398,7 @@ void dsr_update_sa(dsr_t *s)
 	dsr_channel_t *c;
 	int i, b;
 	
-	/* Generate the SAÜ/PA (programme information) frames (test data) */
+	/* Generate the SAÜ/PA (programme information) frames */
 	for(i = 0; i < 56; i++)
 	{
 		c = &s->channels[(i & 7) * 4];
@@ -424,7 +424,7 @@ void dsr_update_sa(dsr_t *s)
 		s->sa[i][7] = 0x00;
 	}
 	
-	/* Generate the SAÜ/SK (programme source) frames (test data) */
+	/* Generate the SAÜ/SK (programme source) frames */
 	for(; i < 128; i++)
 	{
 		c = &s->channels[(i & 7) * 4];
