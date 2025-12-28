@@ -56,8 +56,8 @@ typedef char* conf_t;
  * Use index -1 to read a key from any iteration of any occurrence of a
  * section.
  * 
- * If the same key appears multiple times, only the first matching instance
- * is used.
+ * If the same key appears multiple times within a section, only the first
+ * matching instance is used.
 */
 
 extern conf_t conf_loadfile(const char *filename);
