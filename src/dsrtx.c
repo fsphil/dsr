@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
 		return(-1);
 	}
 	
-	/* Initalise the modem */
+	/* Initalise the modulator */
 	rf_qpsk_init(&s.qpsk, s.sample_rate / DSR_SYMBOL_RATE, 0.8 * rf_scale(&s.rf));
 	
 	while(!_abort)
@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 		/* Encode the next audio block (2ms) */
 		dsr_encode(&s.dsr, block, audio);
 		
-		/* New version */
+		/* Modulate the block and transmit */
 		l = rf_qpsk_modulate(&s.qpsk, o2, block, 40960);
 		rf_write(&s.rf, o2, l);
 	}
