@@ -269,43 +269,6 @@ const int _load_config(dsrtx_t *s, const char *filename)
 	return(0);
 }
 
-static int testrun(dsrtx_t *s)
-{
-	uint8_t block[5120];
-	int16_t o2[40960 * 2 * 5];
-	int l;
-	int16_t audio[64 * 32];
-	
-	while(!_abort)
-	{
-		/* Update the audio block */
-		memset(audio, 0, 64 * 32 * sizeof(int16_t));
-		
-		for(l = 0; l < 32; l++)
-		{
-			if(s->dsr.channels[l & 30].mode == 1 &&
-			   s->dsr.channels[(l & 30) + 1].mode == 2)
-			{
-				src_read_stereo(s->dsr.channels[l].arg, &audio[l * 64], 1, &audio[(l + 1) * 64], 1, 64);
-				l++;
-			}
-			else if(s->dsr.channels[l].mode == 1)
-			{
-				src_read_mono(s->dsr.channels[l].arg, &audio[l * 64], 1, 64);
-			}
-		}
-		
-		/* Encode the next audio block (2ms) */
-		dsr_encode(&s->dsr, block, audio);
-		
-		/* New version */
-		l = rf_qpsk_modulate(&s->qpsk, o2, block, 40960);
-		rf_write(&s->rf, o2, l);
-	}
-	
-	return(0);
-}
-
 int main(int argc, char *argv[])
 {
 	dsrtx_t s;
@@ -317,6 +280,10 @@ int main(int argc, char *argv[])
 		{ "verbose", no_argument,       0, 'V' },
 		{ 0, 0, 0, 0 }
 	};
+	uint8_t block[5120];
+	int16_t o2[40960 * 2 * 5];
+	int l;
+	int16_t audio[64 * 32];
 	
 #ifdef HAVE_FFMPEG
 	src_ffmpeg_init();
@@ -442,7 +409,32 @@ int main(int argc, char *argv[])
 	/* Initalise the modem */
 	rf_qpsk_init(&s.qpsk, s.sample_rate / DSR_SYMBOL_RATE, 0.8 * rf_scale(&s.rf));
 	
-	testrun(&s);
+	while(!_abort)
+	{
+		/* Update the audio block */
+		memset(audio, 0, 64 * 32 * sizeof(int16_t));
+		
+		for(l = 0; l < 32; l++)
+		{
+			if(s.dsr.channels[l & 30].mode == 1 &&
+			   s.dsr.channels[(l & 30) + 1].mode == 2)
+			{
+				src_read_stereo(s.dsr.channels[l].arg, &audio[l * 64], 1, &audio[(l + 1) * 64], 1, 64);
+				l++;
+			}
+			else if(s.dsr.channels[l].mode == 1)
+			{
+				src_read_mono(s.dsr.channels[l].arg, &audio[l * 64], 1, 64);
+			}
+		}
+		
+		/* Encode the next audio block (2ms) */
+		dsr_encode(&s.dsr, block, audio);
+		
+		/* New version */
+		l = rf_qpsk_modulate(&s.qpsk, o2, block, 40960);
+		rf_write(&s.rf, o2, l);
+	}
 	
 	rf_close(&s.rf);
 	
